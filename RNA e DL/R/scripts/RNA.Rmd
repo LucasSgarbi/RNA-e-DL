@@ -1,0 +1,72 @@
+
+RNA com College prevendo privado ou não 
+
+```{r}
+#install.packages("neuralnet")
+#install.packages('mltools')
+#install.packages('data.table')
+#install.packages("caret", dependencies=T)
+#install.packages("ISLR")
+library(neuralnet)
+library(mltools)
+library(data.table)
+library(caret)
+library(ISLR)
+```
+Dimensionamento de Características - Padronização
+```{r}
+dim(College)
+College
+dados2 = scale(College[,2:18])
+dados2 = as.data.frame(dados2)
+dados2
+#volta a clase
+dados2$Private = College$Private
+dados2
+```
+Dividindo em teste e treino 
+```{r}
+set.seed(411)
+particao = createDataPartition(1:dim(dados2)[1],p=.7)
+dadostreino = dados2[particao$Resample1,]
+dadosteste = dados2[- particao$Resample1,]
+dim(dadostreino)
+dim(dadosteste)
+```
+One hot encoding para a Privada
+```{r}
+dadostreino = cbind(dadostreino[,1:17], one_hot(as.data.table(dadostreino[,18])))
+dadostreino
+```
+Modelo de Rede Neural
+```{r}
+modelo = neuralnet(V1_No + V1_Yes ~ Apps + Accept + Enroll + Top10perc + Top25perc + F.Undergrad + P.Undergrad + Outstate + Room.Board + Books + Personal + PhD + Terminal + S.F.Ratio + perc.alumni + Expend + Grad.Rate, dadostreino, hidden=c(9,4))
+
+print(modelo)
+plot(modelo)
+```
+Teste
+```{r}
+teste = compute(modelo,dadosteste[1:17]) 
+teste$net.result
+resultado = as.data.frame(teste$net.result)
+resultado
+```
+Atribuindo nomes
+```{r}
+names(resultado)[1] <- 'No'
+names(resultado)[2] <- 'Yes'
+resultado
+```
+
+```{r}
+resultado$Private = colnames(resultado[,1:2])[max.col(resultado[,1:2], ties.method = 'first')]
+resultado
+```
+Avaliar performance 
+```{r}
+confusao = table(resultado$Private,dadosteste$Private)
+confusao
+sum(diag(confusao) * 100 / sum(confusao))
+```
+

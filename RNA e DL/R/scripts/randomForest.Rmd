@@ -1,0 +1,42 @@
+Utilizando randomForest
+
+```{r}
+#install.packages("e1071")
+#install.packages("randomForest")
+library(e1071)
+library(randomForest)
+```
+Importando os dados e one 
+
+```{r}
+dados = read.csv("soybean.csv")
+head(dados)
+dados$class = as.factor(dados$class)
+
+```
+dividindo
+```{r}
+set.seed(0411)
+particao = createDataPartition(1:dim(dados)[1],p=.7)
+dadostreino = dados[particao$Resample1,]
+dadosteste = dados[- particao$Resample1,]
+dim(dadosteste)
+dim(dadostreino)
+
+```
+Criando modelo com selação de atributos 
+
+```{r}
+modelo  = randomForest(class ~ ., data = dadostreino, ntree=1000)
+modelo
+```
+
+```{r}
+predicao = predict(modelo,dadosteste) 
+confusao = table(dadosteste$class,predicao)
+
+sum(diag(confusao) * 100 / sum(confusao))
+
+```
+
+
